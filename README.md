@@ -1,4 +1,4 @@
-## Grafana Scraper
+## Grafana to CSV
 
 Perform Prometheus queries through Grafana's API across multiple time frames, and export the data to CSV format for analysis in spreadsheets.
 
