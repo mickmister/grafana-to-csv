@@ -8,7 +8,7 @@ const daysToMillis = (num: number) => {
 const utcOffsetSec = -18000;
 const maxDataPoints = 1130;
 const datasourceUid = process.env.GRAFANA_DATASOURCE_UID!;
-const datasourceId = parseInt(process.env.GRAFANA_DATASOURCE_ID!);
+const datasourceId = process.env.GRAFANA_DATASOURCE_ID ? parseInt(process.env.GRAFANA_DATASOURCE_ID) : 86;
 
 export const makeBodyFromQueries = (queryNumber: number, daysPerQuery: number, offsetDays: number, queries: Query[], namespace: string): GrafanaRequestBody => {
     const time1 = new Date().getTime() - (daysToMillis((offsetDays + queryNumber * daysPerQuery)));
