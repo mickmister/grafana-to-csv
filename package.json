@@ -1,0 +1,24 @@
+{
+  "name": "grafana_scraper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "fetch-data": "ts-node index.ts",
+    "create-csv": "ts-node csv_creator.ts",
+    "test": "jest csv_creator"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "@types/node-fetch": "^2.6.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
