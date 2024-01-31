@@ -54,13 +54,13 @@ type CsvObject = {
     data: string;
 }
 
-const formatCsv = (parsedFiles: ParsedEntries[]): CsvObject[] => {
+const formatCsv = (parsedFiles: ParsedEntriesWithDateRange[]): CsvObject[] => {
     const out: CsvObject[] = [];
     const allEntries: Record<string, Record<string, Record<string, number>>> = {};
 
     parsedFiles.forEach((parsedFile, i) => {
-        for (const legendName of Object.keys(parsedFile)) {
-            const entries = parsedFile[legendName];
+        for (const legendName of Object.keys(parsedFile.entries)) {
+            const entries = parsedFile.entries[legendName];
             allEntries[legendName] ||= {};
             for (const entry of entries) {
                 allEntries[legendName][entry.fieldValue] ||= {};
@@ -72,14 +72,25 @@ const formatCsv = (parsedFiles: ParsedEntries[]): CsvObject[] => {
     for (const legendName of Object.keys(allEntries)) {
         const fieldValues = Object.keys(allEntries[legendName]);
 
-        const lines = [legendName];
-        for (const fieldValue of fieldValues) {
+        const dateRanges = parsedFiles.map((f) => f.dateRange);
+        const firstLine = [legendName, ...dateRanges, 'Comparison'].join(',,');
+        const lines = [firstLine];
+        for (let rowNum = 0; rowNum < fieldValues.length; rowNum++) {
+            const fieldValue = fieldValues[rowNum];
             const perField = allEntries[legendName][fieldValue];
             const line: string[] = [fieldValue];
-            for (let i = 0; i < parsedFiles.length; i++) {
-                const stored: number | undefined = perField[i];
+            for (let columnNum = 0; columnNum < parsedFiles.length; columnNum++) {
+                const stored: number | undefined = perField[columnNum];
                 line.push((stored || '') + '');
             }
+
+            const A = 'A'.charCodeAt(0);
+            const startChar = String.fromCharCode(A + 2);
+            const endChar = String.fromCharCode(A + parsedFiles.length * 2);
+            const sheetsRowNum = rowNum + 2;
+            const comparisonCell = `=${endChar}${sheetsRowNum}/${startChar}${sheetsRowNum}`;
+            line.push(comparisonCell);
+
             lines.push(line.join(',,'));
         }
 
@@ -90,8 +101,13 @@ const formatCsv = (parsedFiles: ParsedEntries[]): CsvObject[] => {
     return out;
 }
 
+type ParsedEntriesWithDateRange = {
+    dateRange: string;
+    entries: ParsedEntries;
+}
+
 setTimeout(async () => {
-    const allFileData: ParsedEntries[] = [];
+    const allFileData: ParsedEntriesWithDateRange[] = [];
 
     const topFolder = `./data/${config.jsonFolderName}`;
     const jsonFolders = await fs.readdir(topFolder);
@@ -106,7 +122,15 @@ setTimeout(async () => {
         const rawFileData = (await fs.readFile(fpath)).toString();
         const fileData = JSON.parse(rawFileData) as GrafanaResponseBody;
         const entries = parseIntoEntries(fileData);
-        allFileData.push(entries);
+
+        const startIndex = config.jsonFolderName.length + 1;
+        const endIndex = fname.length - '.json'.length;
+        const dateRange = fname.substring(startIndex, endIndex);
+
+        allFileData.push({
+            dateRange,
+            entries,
+        });
     }
 
     const allCsvData = formatCsv(allFileData);

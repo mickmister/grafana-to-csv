@@ -6,7 +6,8 @@ export type Query = {
 export type Config = {
     jsonFolderName: string;
     csvFolderName: string;
-    totalNumberOfQueries: number;
-    numberOfDaysPerQuery: number;
+    totalNumberOfRequests: number;
+    numberOfDaysPerRequest: number;
     queries: Query[];
+    runQueries: number[];
 }

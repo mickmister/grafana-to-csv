@@ -1,6 +1,9 @@
 import fetch from 'node-fetch';
 require('dotenv').config();
 
+import fs from 'fs/promises';
+import {Config} from './types/config_types';
+
 import {makeBodyFromQueries} from './grafana_queries';
 
 import configFile from './config.json';
@@ -13,15 +16,15 @@ if (!cookie) {
     process.exit(0);
 }
 
-const dashboardUid = process.env.DASHBOARD_UID;
+const dashboardUid = process.env.GRAFANA_DASHBOARD_UID;
 if (!dashboardUid) {
-    console.log('Please provide a dashboard uid via DASHBOARD_UID env var');
+    console.log('Please provide a dashboard uid via GRAFANA_DASHBOARD_UID env var');
     process.exit(0);
 }
 
-const datasourceUid = process.env.DATASOURCE_UID;
+const datasourceUid = process.env.GRAFANA_DATASOURCE_UID;
 if (!datasourceUid) {
-    console.log('Please provide a datasource uid via DATASOURCE_UID env var');
+    console.log('Please provide a datasource uid via GRAFANA_DATASOURCE_UID env var');
     process.exit(0);
 }
 
@@ -57,17 +60,19 @@ const headers = {
     "x-plugin-id": "prometheus"
 };
 
-import fs from 'fs/promises';
-import {Config} from './types/config_types';
-
 // const notifier = require('node-notifier');
 
 const notify = (message: string) => {
     // notifier.notify(message);
 }
 
+let configuredQueries = config.queries;
+if (config.runQueries.length) {
+    configuredQueries = config.runQueries.map((index) => config.queries[index]).filter(Boolean);
+}
+
 setTimeout(async () => {
-    const numQueries = config.totalNumberOfQueries;
+    const numQueries = config.totalNumberOfRequests;
 
     const iso = new Date().toISOString();
     const outPrefix = config.jsonFolderName;
@@ -75,8 +80,9 @@ setTimeout(async () => {
     const directory = `./data/${outPrefix}/${iso}`;
     await fs.mkdir(directory, {recursive: true});
 
-    const totalDays = numQueries * config.numberOfDaysPerQuery;
-    console.log(`Fetching ${totalDays} days worth of Prometheus data. ${numQueries} sets of ${config.queries.length} queries, each ${config.numberOfDaysPerQuery} days`);
+    const totalDays = numQueries * config.numberOfDaysPerRequest;
+    console.log(`Fetching ${totalDays} days worth of Prometheus data. ${numQueries} sets of ${configuredQueries.length} queries, each ${config.numberOfDaysPerRequest} days\nUsing queries:\n`);
+    console.log(JSON.stringify(configuredQueries, null, 2));
 
     for (let queryNumber = numQueries - 1; queryNumber > -1; queryNumber--) {
         console.log('');
@@ -95,7 +101,10 @@ setTimeout(async () => {
             return;
         }
 
-        const fname = `${directory}/${outPrefix}-${queryNumber}.json`;
+        const [startDateStr, endDateStr] = getDateRangeFromQueryNumber(config.numberOfDaysPerRequest, queryNumber);
+        const fname = `${directory}/${outPrefix}-${startDateStr}_${endDateStr}.json`;
+
+        // const fname = `${directory}/${outPrefix}-${queryNumber}.json`;
         await fs.writeFile(fname, JSON.stringify(res, null, 2));
         const message = `Wrote ${fname}`;
         console.log(message);
@@ -112,7 +121,7 @@ setTimeout(async () => {
 });
 
 const makeBody = (queryNumber: number) => {
-    return makeBodyFromQueries(queryNumber, config.numberOfDaysPerQuery, config.queries, namespace);
+    return makeBodyFromQueries(queryNumber, config.numberOfDaysPerRequest, configuredQueries, namespace);
 }
 
 const doRequest = async (dayNumber: number): Promise<object> => {
@@ -143,4 +152,16 @@ const body = makeBody(dayNumber);
     console.log(`${ms}ms`);
 
     return data;
+}
+
+const getDateRangeFromQueryNumber = (numberOfDaysPerQuery: number, queryNumber: number): [string, string] => {
+    const now = new Date().getTime();
+    const millisInDay = 1000 * 60 * 60 * 24;
+
+    const start = now - (millisInDay * numberOfDaysPerQuery * (queryNumber + 1));
+    const end = now - (millisInDay * numberOfDaysPerQuery * queryNumber);
+
+    const startDateStr = new Date(start).toISOString().substring(0, 10);
+    const endDateStr = new Date(end).toISOString().substring(0, 10);
+    return [startDateStr, endDateStr];
 }

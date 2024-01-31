@@ -7,10 +7,15 @@
         {
             "expression": "(1000 * sum(increase(mattermost_api_time_sum{namespace=\"$NAMESPACE\"}[$__range])) by (handler) / sum(increase(mattermost_api_time_count{namespace=\"$NAMESPACE\"}[$__range]) > 0) by (handler))",
             "name": "Average time for API handlers"
+        },
+        {
+            "expression": "(1000 * sum(increase(mattermost_db_store_time_sum[$__range]) and increase(mattermost_db_store_time_count[$__range]) > 0) by (method))",
+            "name": "Total time for database methods"
         }
     ],
+    "runQueries": [0, 2],
     "jsonFolderName": "json-out",
     "csvFolderName": "csv-out",
-    "totalNumberOfQueries": 2,
-    "numberOfDaysPerQuery": 14
+    "totalNumberOfRequests": 2,
+    "numberOfDaysPerRequest": 1
 }
