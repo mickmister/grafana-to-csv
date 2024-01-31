@@ -37,10 +37,10 @@
             "name": "Database methods - Count"
         }
     ],
-    "runQueries": [6, 7, 8],
+    "runQueries": [],
     "jsonFolderName": "json-out",
     "csvFolderName": "csv-out",
-    "totalNumberOfRequests": 5,
-    "numberOfDaysPerRequest": 14,
+    "totalNumberOfRequests": 12,
+    "numberOfDaysPerRequest": 7,
     "offsetDays": 0
 }
