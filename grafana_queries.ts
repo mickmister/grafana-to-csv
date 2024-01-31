@@ -1,30 +1,58 @@
+import {Query} from './types/config_types';
+import {GrafanaQueryPayload, GrafanaRequestBody} from './types/grafana_types';
+
 const daysToMillis = (num: number) => {
     return num * (1000 * 60 * 60 * 24);
 }
 
-export const makeReconnectAPIHandlerBody = (dayNumber: number) => {
-    const expr = 'sum(increase(mattermost_api_time_count{page_load_context=~"reconnect"}[$__range])) by (handler)';
-    return makeBody(dayNumber, expr, 'D');
+const utcOffsetSec = -18000;
+const intervalMs = 120000;
+const maxDataPoints = 1130;
+const datasourceUid = process.env.GRAFANA_DATASOURCE_UID!;
+const datasourceId = parseInt(process.env.GRAFANA_DATASOURCE_ID!);
+
+export const makeBodyFromQueries = (queryNumber: number, daysPerQuery: number, queries: Query[], namespace: string): GrafanaRequestBody => {
+    const time1 = new Date().getTime() - (daysToMillis(queryNumber * daysPerQuery));
+    const time2 = time1 - daysToMillis(daysPerQuery);
+
+    const from = time2 + '';;
+    const to = time1 + '';
+
+    const queryObjects = queries.map((query, i): GrafanaQueryPayload => {
+        const refId = query.name;
+        const expression = query.expression.replaceAll('$NAMESPACE', namespace);
+
+        return {
+            datasource: {
+                type: 'prometheus',
+                uid: datasourceUid,
+            },
+            editorMode: 'code',
+            expr: expression,
+            format: 'table',
+            hide: false,
+            instant: true,
+            interval: '',
+            intervalFactor: 1,
+            legendFormat: query.name,
+            refId: refId,
+            exemplar: false,
+            requestId: `2${refId}`,
+            utcOffsetSec,
+            datasourceId,
+            intervalMs,
+            maxDataPoints,
+        };
+    });
+
+    return {
+        from,
+        to,
+        queries: queryObjects,
+    };
 }
 
-export const makeReconnectAvgBody = (dayNumber: number) => {
-    const expr = `(1000 * sum(increase(mattermost_api_time_sum{namespace="${namespace}",page_load_context=~"reconnect"}[$__range])) by (handler) / sum(increase(mattermost_api_time_count{namespace="${namespace}",page_load_context=~"reconnect"}[$__range]) > 0) by (handler))`;
-    return makeBody(dayNumber, expr, 'A');
-}
-
-const makeReconnectCallCountBody = (dayNumber: number) => {
-    const expr = `sum(increase(mattermost_api_time_count{namespace="${namespace}",page_load_context=~"reconnect"}[$__range]) > 0) by (handler)`;
-    return makeBody(dayNumber, expr, 'A');
-}
-
-const makeReconnectTotalTimeBody = (dayNumber: number) => {
-    const expr = `sum(increase(mattermost_api_time_sum{namespace="${namespace}",page_load_context=~"reconnect"}[$__range])) by (handler)`;
-    return makeBody(dayNumber, expr, 'A');
-}
-
-const namespace = 'rxocmq9isjfm3dgyf4ujgnfz3c';
-
-const makeBody = (dayNumber: number, expr: string, refId: string) => {
+export const makeBodyFromExpression = (dayNumber: number, expr: string, refId: string) => {
     const time1 = new Date().getTime() - (daysToMillis(dayNumber));
     const time2 = time1 - daysToMillis(1);
 

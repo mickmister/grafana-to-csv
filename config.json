@@ -1,0 +1,16 @@
+{
+    "queries": [
+        {
+            "expression": "(1000 * sum(increase(mattermost_api_time_sum{namespace=\"$NAMESPACE\",page_load_context=~\"reconnect\"}[$__range])) by (handler) / sum(increase(mattermost_api_time_count{namespace=\"$NAMESPACE\",page_load_context=~\"reconnect\"}[$__range]) > 0) by (handler))",
+            "name": "Average time for API handlers. Reconnect only"
+        },
+        {
+            "expression": "(1000 * sum(increase(mattermost_api_time_sum{namespace=\"$NAMESPACE\"}[$__range])) by (handler) / sum(increase(mattermost_api_time_count{namespace=\"$NAMESPACE\"}[$__range]) > 0) by (handler))",
+            "name": "Average time for API handlers"
+        }
+    ],
+    "jsonFolderName": "json-out",
+    "csvFolderName": "csv-out",
+    "totalNumberOfQueries": 2,
+    "numberOfDaysPerQuery": 14
+}

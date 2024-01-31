@@ -1,7 +1,11 @@
 import fetch from 'node-fetch';
 require('dotenv').config();
 
-import {makeReconnectAvgBody} from './grafana_queries';
+import {makeBodyFromQueries} from './grafana_queries';
+
+import configFile from './config.json';
+
+const config: Config = configFile;
 
 const cookie = process.env.GRAFANA_COOKIE;
 if (!cookie) {
@@ -27,6 +31,12 @@ if (!deviceId) {
     process.exit(0);
 }
 
+const namespace = process.env.GRAFANA_NAMESPACE;
+if (!namespace) {
+    console.log('Please provide a Grafana namespace via GRAFANA_NAMESPACE env var');
+    process.exit(0);
+}
+
 let incrementingRequestId = 100;
 
 const headers = {
@@ -48,6 +58,7 @@ const headers = {
 };
 
 import fs from 'fs/promises';
+import {Config} from './types/config_types';
 
 // const notifier = require('node-notifier');
 
@@ -56,38 +67,69 @@ const notify = (message: string) => {
 }
 
 setTimeout(async () => {
-    const numDays = 66;
+    const numQueries = config.totalNumberOfQueries;
 
-    const directory = `./data/${outPrefix}`;
+    const iso = new Date().toISOString();
+    const outPrefix = config.jsonFolderName;
+
+    const directory = `./data/${outPrefix}/${iso}`;
     await fs.mkdir(directory, {recursive: true});
 
-    for (let dayNumber = numDays - 1; dayNumber > -1; dayNumber--) {
-        // for (let dayNumber = 0; dayNumber < numDays; dayNumber++) {
-        const res = await doRequest(dayNumber);
+    const totalDays = numQueries * config.numberOfDaysPerQuery;
+    console.log(`Fetching ${totalDays} days worth of Prometheus data. ${numQueries} sets of ${config.queries.length} queries, each ${config.numberOfDaysPerQuery} days`);
 
-        const fname = `${directory}/${outPrefix}-${dayNumber}.json`;
+    for (let queryNumber = numQueries - 1; queryNumber > -1; queryNumber--) {
+        console.log('');
+        console.log(`Query ${numQueries - queryNumber} of ${numQueries}`);
+
+        let res: object;
+        try {
+            res = await doRequest(queryNumber);
+        } catch (e) {
+            console.error(`Error performing request ${e}`);
+            return;
+        }
+
+        if ('message' in res) {
+            console.log(`Response from Grafana: ${res.message}`);
+            return;
+        }
+
+        const fname = `${directory}/${outPrefix}-${queryNumber}.json`;
         await fs.writeFile(fname, JSON.stringify(res, null, 2));
         const message = `Wrote ${fname}`;
         console.log(message);
-        notify(message);
+        // notify(message);
 
-        await new Promise(r => setTimeout(r, 1000 * 10));
+        if (queryNumber === 0) {
+            return;
+        }
+
+        const secondsToWait = 5;
+        console.log(`Waiting ${secondsToWait} seconds before next request`);
+        await new Promise(r => setTimeout(r, 1000 * secondsToWait));
     }
 });
 
-const makeBody = makeReconnectAvgBody;
+const makeBody = (queryNumber: number) => {
+    return makeBodyFromQueries(queryNumber, config.numberOfDaysPerQuery, config.queries, namespace);
+}
 
-const outPrefix = 'reconnectAvg';
-
-const doRequest = (dayNumber: number) => {
-    const body = makeBody(dayNumber);
-
+const doRequest = async (dayNumber: number): Promise<object> => {
+const body = makeBody(dayNumber);
     incrementingRequestId++;
     const requestId = `Q${incrementingRequestId}`;
 
     const u = `https://grafana.internal.mattermost.com/api/ds/query?ds_type=prometheus&requestId=${requestId}`;
 
-    return fetch(u, {
+    const from = new Date(parseInt(body.from));
+    const to = new Date(parseInt(body.to));
+
+    console.log('from', from.toISOString());
+    console.log('to', to.toISOString());
+
+    const time1 = new Date();
+    const data = await fetch(u, {
         method: 'POST',
         headers: {
             ...headers,
@@ -95,4 +137,10 @@ const doRequest = (dayNumber: number) => {
         },
         body: JSON.stringify(body),
     }).then(r => r.json());
+
+    const time2 = new Date();
+    const ms = time2.getTime() - time1.getTime();
+    console.log(`${ms}ms`);
+
+    return data;
 }

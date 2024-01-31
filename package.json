@@ -5,15 +5,15 @@
   "main": "index.js",
   "scripts": {
     "fetch-data": "ts-node index.ts",
-    "create-csv": "ts-node csv_creator.ts"
+    "create-csv": "ts-node csv_creator.ts",
+    "test": "jest csv_creator"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.3.1",
-    "node-fetch": "^2.7.0",
-    "node-notifier": "^10.0.1"
+    "node-fetch": "^2.7.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
