@@ -33,6 +33,11 @@ const parseIntoEntries = (fdata: GrafanaResponseBody): ParsedEntries => {
     for (const legendName of legendNames) {
         const frames = fdata.results[legendName]!.frames;
         for (const frame of frames) {
+            if (!frame.schema.fields[1]) {
+                console.log(frame.schema);
+                console.log('Error parsing data entry. Please see the logs above.');
+                process.exit(0);
+            }
             const [fieldName, fieldValue] = getFieldFromLabels(frame.schema.fields[1].labels!);
             const value = frame.data.values[1][0];
             const entry: Entry = {

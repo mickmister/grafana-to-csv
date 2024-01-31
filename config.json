@@ -1,21 +1,46 @@
 {
     "queries": [
         {
-            "expression": "(1000 * sum(increase(mattermost_api_time_sum{namespace=\"$NAMESPACE\",page_load_context=~\"reconnect\"}[$__range])) by (handler) / sum(increase(mattermost_api_time_count{namespace=\"$NAMESPACE\",page_load_context=~\"reconnect\"}[$__range]) > 0) by (handler))",
-            "name": "Average time for API handlers. Reconnect only"
+            "expression": "(1000 * (sum(increase(mattermost_api_time_sum{namespace=\"$NAMESPACE\",page_load_context=~\"reconnect\"}[$__range])) by (handler) / sum(increase(mattermost_api_time_count{namespace=\"$NAMESPACE\",page_load_context=~\"reconnect\"}[$__range]) > 0) by (handler)))",
+            "name": "API handlers (reconnect) - Average Time"
         },
         {
-            "expression": "(1000 * sum(increase(mattermost_api_time_sum{namespace=\"$NAMESPACE\"}[$__range])) by (handler) / sum(increase(mattermost_api_time_count{namespace=\"$NAMESPACE\"}[$__range]) > 0) by (handler))",
-            "name": "Average time for API handlers"
+            "expression": "(1000 * sum(increase(mattermost_api_time_count{namespace=\"$NAMESPACE\",page_load_context=~\"reconnect\"}[$__range]) > 0) by (handler))",
+            "name": "API handlers (reconnect) - Count"
         },
         {
-            "expression": "(1000 * sum(increase(mattermost_db_store_time_sum[$__range]) and increase(mattermost_db_store_time_count[$__range]) > 0) by (method))",
-            "name": "Total time for database methods"
+            "expression": "(1000 * sum(increase(mattermost_api_time_sum{namespace=\"$NAMESPACE\",page_load_context=~\"reconnect\"}[$__range])) by (handler))",
+            "name": "API handlers (reconnect) - Total Time"
+        },
+        {
+            "expression": "(1000 * (sum(increase(mattermost_api_time_sum{namespace=\"$NAMESPACE\"}[$__range])) by (handler) / sum(increase(mattermost_api_time_count{namespace=\"$NAMESPACE\"}[$__range]) > 0) by (handler)))",
+            "name": "API handlers - Average Time"
+        },
+        {
+            "expression": "(1000 * sum(increase(mattermost_api_time_count{namespace=\"$NAMESPACE\"}[$__range]) > 0) by (handler))",
+            "name": "API handlers - Count"
+        },
+        {
+            "expression": "(1000 * sum(increase(mattermost_api_time_sum{namespace=\"$NAMESPACE\"}[$__range])) by (handler))",
+            "name": "API handlers - Total Time"
+        },
+        {
+            "expression": "(1000 * (sum(increase(mattermost_db_store_time_sum{namespace=\"$NAMESPACE\"}[$__range])) by (method) / sum(increase(mattermost_db_store_time_count{namespace=\"$NAMESPACE\"}[$__range]) > 0) by (method)))",
+            "name": "Database store methods - Average Time"
+        },
+        {
+            "expression": "(1000 * sum(increase(mattermost_db_store_time_sum{namespace=\"$NAMESPACE\"}[$__range]) and increase(mattermost_db_store_time_count{namespace=\"$NAMESPACE\"}[$__range]) > 0) by (method))",
+            "name": "Database store methods - Total Time"
+        },
+        {
+            "expression": "(1000 * sum(increase(mattermost_db_store_time_count{namespace=\"$NAMESPACE\"}[$__range]) > 0) by (method))",
+            "name": "Database methods - Count"
         }
     ],
-    "runQueries": [0, 2],
+    "runQueries": [6, 7, 8],
     "jsonFolderName": "json-out",
     "csvFolderName": "csv-out",
-    "totalNumberOfRequests": 2,
-    "numberOfDaysPerRequest": 1
+    "totalNumberOfRequests": 5,
+    "numberOfDaysPerRequest": 14,
+    "offsetDays": 0
 }

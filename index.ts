@@ -7,6 +7,7 @@ import {Config} from './types/config_types';
 import {makeBodyFromQueries} from './grafana_queries';
 
 import configFile from './config.json';
+import {GrafanaResponseBody} from './types/grafana_types';
 
 const config: Config = configFile;
 
@@ -72,7 +73,7 @@ if (config.runQueries.length) {
 }
 
 setTimeout(async () => {
-    const numQueries = config.totalNumberOfRequests;
+    const numRequests = config.totalNumberOfRequests;
 
     const iso = new Date().toISOString();
     const outPrefix = config.jsonFolderName;
@@ -80,15 +81,18 @@ setTimeout(async () => {
     const directory = `./data/${outPrefix}/${iso}`;
     await fs.mkdir(directory, {recursive: true});
 
-    const totalDays = numQueries * config.numberOfDaysPerRequest;
-    console.log(`Fetching ${totalDays} days worth of Prometheus data. ${numQueries} sets of ${configuredQueries.length} queries, each ${config.numberOfDaysPerRequest} days\nUsing queries:\n`);
+    const totalDays = numRequests * config.numberOfDaysPerRequest;
+
+    console.log('Using queries:\n');
     console.log(JSON.stringify(configuredQueries, null, 2));
 
-    for (let queryNumber = numQueries - 1; queryNumber > -1; queryNumber--) {
-        console.log('');
-        console.log(`Query ${numQueries - queryNumber} of ${numQueries}`);
+    console.log(`\nFetching ${totalDays} days worth of Prometheus data. ${numRequests} requests each ${config.numberOfDaysPerRequest} days, with ${configuredQueries.length} queries in each request.`);
 
-        let res: object;
+    for (let queryNumber = numRequests - 1; queryNumber > -1; queryNumber--) {
+        console.log('');
+        console.log(`Request ${numRequests - queryNumber} of ${numRequests}`);
+
+        let res: GrafanaResponseBody;
         try {
             res = await doRequest(queryNumber);
         } catch (e) {
@@ -101,7 +105,15 @@ setTimeout(async () => {
             return;
         }
 
-        const [startDateStr, endDateStr] = getDateRangeFromQueryNumber(config.numberOfDaysPerRequest, queryNumber);
+        for (const legendName of Object.keys(res.results)) {
+            const error = res.results[legendName].error;
+            if (error) {
+                console.log(JSON.stringify(res.results[legendName], null, 2), `\n\nReceived error from Grafana for "${legendName}". Look above this line to see the error.\n`);
+                delete res.results[legendName];
+            }
+        }
+
+        const [startDateStr, endDateStr] = getDateRangeFromQueryNumber(config.numberOfDaysPerRequest, config.offsetDays, queryNumber);
         const fname = `${directory}/${outPrefix}-${startDateStr}_${endDateStr}.json`;
 
         // const fname = `${directory}/${outPrefix}-${queryNumber}.json`;
@@ -120,12 +132,12 @@ setTimeout(async () => {
     }
 });
 
-const makeBody = (queryNumber: number) => {
-    return makeBodyFromQueries(queryNumber, config.numberOfDaysPerRequest, configuredQueries, namespace);
+const makeBody = (requestNumber: number) => {
+    return makeBodyFromQueries(requestNumber, config.numberOfDaysPerRequest, config.offsetDays, configuredQueries, namespace);
 }
 
-const doRequest = async (dayNumber: number): Promise<object> => {
-const body = makeBody(dayNumber);
+const doRequest = async (requestNumber: number): Promise<GrafanaResponseBody> => {
+    const body = makeBody(requestNumber);
     incrementingRequestId++;
     const requestId = `Q${incrementingRequestId}`;
 
@@ -154,12 +166,12 @@ const body = makeBody(dayNumber);
     return data;
 }
 
-const getDateRangeFromQueryNumber = (numberOfDaysPerQuery: number, queryNumber: number): [string, string] => {
+const getDateRangeFromQueryNumber = (numberOfDaysPerQuery: number, offsetDays: number, queryNumber: number): [string, string] => {
     const now = new Date().getTime();
     const millisInDay = 1000 * 60 * 60 * 24;
 
-    const start = now - (millisInDay * numberOfDaysPerQuery * (queryNumber + 1));
-    const end = now - (millisInDay * numberOfDaysPerQuery * queryNumber);
+    const start = now - (millisInDay * (offsetDays + numberOfDaysPerQuery * (queryNumber + 1)));
+    const end = now - (millisInDay * (offsetDays + numberOfDaysPerQuery * queryNumber));
 
     const startDateStr = new Date(start).toISOString().substring(0, 10);
     const endDateStr = new Date(end).toISOString().substring(0, 10);

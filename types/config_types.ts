@@ -10,4 +10,5 @@ export type Config = {
     numberOfDaysPerRequest: number;
     queries: Query[];
     runQueries: number[];
+    offsetDays: number;
 }

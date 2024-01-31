@@ -31,6 +31,7 @@ export type GrafanaResponseBody = {
 }
 type Results = {
     [legendName: string]: {
+        error?: string;
         status: number;
         frames: FramesItem[];
     };
