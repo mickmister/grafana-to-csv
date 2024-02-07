@@ -8,8 +8,6 @@ import originalFileData from '../../data/multi/two weeks/now-14d.json';
 import {GrafanaResponseBody, Labels} from '../../types/grafana_types';
 import {Config} from '../../types/config_types';
 
-const fileData: GrafanaResponseBody = originalFileData;
-
 type Entry = {
     fieldName: string;
     fieldValue: string;

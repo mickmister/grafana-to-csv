@@ -4,7 +4,7 @@ import {Config} from '../types/config_types';
 
 import configFile from '../config.json';
 import {runJobFetchData} from './grafana/job';
-import {runJobCreateCsv} from './sheets/csv_creator';
+import {runJobCreateCsv} from './csv/csv_creator';
 
 let config: Config = configFile;
 
