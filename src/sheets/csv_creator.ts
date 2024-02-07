@@ -1,12 +1,12 @@
 import fs from 'fs/promises';
 
-import configFile from './config.json';
+import configFile from '../../config.json';
 
 const config: Config = configFile;
 
-import originalFileData from './data/multi/two weeks/now-14d.json';
-import {GrafanaResponseBody, Labels} from './types/grafana_types';
-import {Config} from './types/config_types';
+import originalFileData from '../../data/multi/two weeks/now-14d.json';
+import {GrafanaResponseBody, Labels} from '../../types/grafana_types';
+import {Config} from '../../types/config_types';
 
 const fileData: GrafanaResponseBody = originalFileData;
 
@@ -111,7 +111,7 @@ type ParsedEntriesWithDateRange = {
     entries: ParsedEntries;
 }
 
-setTimeout(async () => {
+export const runJobCreateCsv = async () => {
     const allFileData: ParsedEntriesWithDateRange[] = [];
 
     const topFolder = `./data/${config.jsonFolderName}`;
@@ -148,4 +148,4 @@ setTimeout(async () => {
 
         await fs.writeFile(outputFileName, csvData.data);
     }
-});
+};

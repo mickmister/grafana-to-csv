@@ -41,6 +41,6 @@
     "jsonFolderName": "json-out",
     "csvFolderName": "csv-out",
     "totalNumberOfRequests": 12,
-    "numberOfDaysPerRequest": 7,
+    "numberOfDaysPerRequest": 14,
     "offsetDays": 0
 }

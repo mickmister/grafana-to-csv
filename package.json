@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "fetch-data": "ts-node index.ts",
+    "start": "ts-node src/index.ts",
+    "fetch-data": "ts-node src/grafana/index.ts",
     "create-csv": "ts-node csv_creator.ts",
     "test": "jest csv_creator"
   },

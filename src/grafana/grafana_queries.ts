@@ -1,5 +1,5 @@
-import {Query} from './types/config_types';
-import {GrafanaQueryPayload, GrafanaRequestBody} from './types/grafana_types';
+import {Query} from '../../types/config_types';
+import {GrafanaQueryPayload, GrafanaRequestBody} from '../../types/grafana_types';
 
 const daysToMillis = (num: number) => {
     return num * (1000 * 60 * 60 * 24);
