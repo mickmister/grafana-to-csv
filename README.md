@@ -1,4 +1,4 @@
-## Grafana Scraper
+# Grafana Scraper
 
 This tool is used to perform Prometheus queries through Grafana's API, collecting data across multiple time frames. The output for each query is grouped into different CSV files, then exported into a Google Sheets spreadsheet for analysis.
 
@@ -104,24 +104,21 @@ npm start
 
 ---
 
-Alternatively, you can run each step of the report separately for debugging:
+Alternatively, you can run each step of the report separately for development:
 
-Gather data from Grafana:
+1. Gather data from Grafana, then you can examine the `data/json-out` folder for the fetched JSON data
 
 ```sh
 npm run fetch-data
 ```
-Then check the `data/csv-out` folder for the generated CSV files
 
-Create CSV report of the most recent data fetched from Grafana
+2. Create CSV report of the most recent JSON data fetched from Grafana, then you can examine the `data/csv-out` folder for the generated CSV files
 
 ```sh
 npm run create-csv
 ```
 
-Then check the `data/csv-out` folder for the generated CSV files
-
-Create a new Google Sheets spreadsheet:
+3. Create a new Google Sheets spreadsheet from the most recent generated CSV data
 
 ```sh
 npm run create-spreadsheet
