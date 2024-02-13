@@ -5,9 +5,10 @@ import configFile from '../../config.json';
 const config: Config = configFile;
 
 import {Config} from '../../types/config_types';
-import {addDataToSheet, addMultipleSheets, createSpreadsheet, shareSpreadsheet} from './sheets_utils';
+import {addDataToSheet, addMultipleSheets, createSpreadsheet, deleteSheet, freezeRows, getSpreadsheet, shareSpreadsheet} from './sheets_utils';
+import {GOOGLE_SPREADSHEET_NAME} from './environment';
 
-export const runJobCreateGoogleSheetFromCsv = async (userEmail: string) => {
+export const runJobCreateGoogleSheetFromCsv = async () => {
     const topFolder = `./data/${config.csvFolderName}`;
     const csvFolders = await fs.readdir(topFolder);
     csvFolders.sort();
@@ -15,13 +16,17 @@ export const runJobCreateGoogleSheetFromCsv = async (userEmail: string) => {
     const fullFolderName = `${topFolder}/${timestampedFolder}`;
     const csvFiles = await fs.readdir(fullFolderName);
 
-    const gSpreadsheet = await createSpreadsheet('My Spreadsheet');
+    let gSpreadsheet = await createSpreadsheet(GOOGLE_SPREADSHEET_NAME!);
     console.log('Spreadsheet URL:', gSpreadsheet.data.spreadsheetUrl);
     fs.appendFile('./spreadsheet-urls.txt', '\n' + gSpreadsheet.data.spreadsheetUrl!);
 
-    await shareSpreadsheet(gSpreadsheet.data.spreadsheetId!, userEmail);
+    const spreadsheetId = gSpreadsheet.data.spreadsheetId!
 
-    await addMultipleSheets(gSpreadsheet.data.spreadsheetId!, csvFiles);
+    await shareSpreadsheet(spreadsheetId);
+
+    await addMultipleSheets(spreadsheetId, csvFiles);
+
+    gSpreadsheet = await getSpreadsheet(spreadsheetId);
 
     for (const fname of csvFiles) {
         console.log(`adding sheet ${fname}`);
@@ -29,9 +34,23 @@ export const runJobCreateGoogleSheetFromCsv = async (userEmail: string) => {
 
         const rawFileData = (await fs.readFile(fpath)).toString();
 
-        const lines = rawFileData.split('\n').map(s => s.split(','));
+        const lines = rawFileData.split('\n').map(s => s.split('|'));
 
-        await addDataToSheet(gSpreadsheet.data.spreadsheetId!, fname, lines);
+        await addDataToSheet(spreadsheetId, fname, lines);
+        const sheet = gSpreadsheet.data.sheets!.find(s => s.properties!.title === fname);
+        if (sheet) {
+            await freezeRows(spreadsheetId, sheet.properties!.sheetId!, 2);
+        } else {
+            console.log(`Failed to freeze rows for sheet ${fname}`);
+        }
+    }
+
+    const sheet = gSpreadsheet.data.sheets!.find(s => s.properties!.title === 'Sheet1');
+    if (sheet) {
+        console.log('Deleting default empty sheet in spreadsheet');
+        await deleteSheet(spreadsheetId, sheet.properties!.sheetId!);
+    } else {
+        console.log('Failed to delete default empty sheet');
     }
 
     return gSpreadsheet;

@@ -2,6 +2,8 @@
 
 import {google} from 'googleapis';
 
+import {GOOGLE_DOMAIN, GOOGLE_USER_EMAIL} from './environment';
+
 console.log('creating google auth');
 const auth = new google.auth.GoogleAuth({
     keyFile: './_debug/esp-performance-tracking-auth.json',
@@ -70,14 +72,26 @@ export const addDataToSheet = async (spreadsheetId: string, sheetTitle: string, 
     });
 }
 
-export const shareSpreadsheet = async (spreadsheetId: string, userEmail: string) => {
+export const shareSpreadsheet = async (spreadsheetId: string) => {
+    let args: {type: 'domain'; domain: string} | {type: 'user'; emailAddress: string};
+    if (GOOGLE_USER_EMAIL) {
+        args = {
+            type: 'user',
+            emailAddress: GOOGLE_USER_EMAIL,
+        };
+    } else if (GOOGLE_DOMAIN) {
+        args = {
+            type: 'domain',
+            domain: GOOGLE_DOMAIN,
+        };
+    } else {
+        throw new Error('No Google email or domain provided');
+    }
+
     try {
         await drive.permissions.create({
             requestBody: {
-                // type: 'domain',
-                // domain: 'mydomain.com',
-                type: 'user',
-                emailAddress: userEmail,
+                ...args,
                 role: 'writer',
             },
             fileId: spreadsheetId,
@@ -85,7 +99,7 @@ export const shareSpreadsheet = async (spreadsheetId: string, userEmail: string)
             sendNotificationEmail: false,
         });
 
-        console.log(`Spreadsheet shared with user: ${userEmail}`);
+        console.log(`Spreadsheet shared with: ${GOOGLE_USER_EMAIL || GOOGLE_DOMAIN}`);
     } catch (error) {
         console.error('Error sharing spreadsheet:', error);
     }
@@ -103,6 +117,14 @@ export const createSpreadsheet = async (title: string) => {
     return spreadsheet;
 }
 
+export const getSpreadsheet = async (spreadsheetId: string) => {
+    const spreadsheet = await sheets.spreadsheets.get({
+        spreadsheetId,
+    });
+
+    return spreadsheet;
+}
+
 export const deleteSpreadsheet = async (spreadsheetId: string) => {
     try {
         await drive.files.delete({
@@ -111,6 +133,48 @@ export const deleteSpreadsheet = async (spreadsheetId: string) => {
 
         console.log(`spreadsheet ${spreadsheetId} deleted`);
     } catch (error) {
-        console.error('Error sharing spreadsheet:', error);
+        console.error('Error deleting spreadsheet:', error);
+    }
+}
+
+export const deleteSheet = async (spreadsheetId: string, sheetId: number) => {
+    try {
+        await sheets.spreadsheets.batchUpdate({
+            spreadsheetId,
+            requestBody: {
+                requests: [{
+                    deleteSheet: {
+                        sheetId,
+                        // spreadsheetId,
+                        // sheetId,
+                    },
+                }],
+            },
+        });
+    } catch (error) {
+        console.error('Error deleting sheet:', error);
+    }
+}
+
+export const freezeRows = async (spreadsheetId: string, sheetId: number, numberOfRowsToFreeze: number) => {
+    try {
+        await sheets.spreadsheets.batchUpdate({
+            spreadsheetId,
+            requestBody: {
+                requests: [{
+                    updateSheetProperties: {
+                        properties: {
+                            sheetId,
+                            gridProperties: {
+                                frozenRowCount: numberOfRowsToFreeze,
+                            },
+                        },
+                        fields: 'gridProperties.frozenRowCount'
+                    },
+                }],
+            },
+        });
+    } catch (error) {
+        console.error('Error freezing rows:', error);
     }
 }

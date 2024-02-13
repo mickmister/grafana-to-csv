@@ -15,7 +15,6 @@ export type GrafanaQueryPayload = {
     exemplar: boolean;
     requestId: string;
     utcOffsetSec: number;
-    datasourceId: number;
     intervalMs: number;
     maxDataPoints: number;
 }
@@ -74,8 +73,4 @@ export type Labels = {
 }
 type Data = {
     values: any[];
-}
-type Count = {
-    status: number;
-    frames: FramesItem[];
 }

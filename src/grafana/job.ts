@@ -23,7 +23,7 @@ export const runJobFetchData = async (config: Config) => {
     console.log('Using queries:\n');
     console.log(JSON.stringify(configuredQueries, null, 2));
 
-    console.log(`\nFetching ${totalDays} days worth of Prometheus data. ${numRequests} requests each ${config.numberOfDaysPerRequest} days, with ${configuredQueries.length} queries in each request.`);
+    console.log(`\nFetching ${totalDays} days worth of Prometheus data. ${numRequests} requests each ${config.numberOfDaysPerRequest} days, with ${configuredQueries.length} kinds of Prometheus queries in each request.`);
 
     for (let queryNumber = numRequests - 1; queryNumber > -1; queryNumber--) {
         console.log('');

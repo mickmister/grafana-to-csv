@@ -1,6 +1,6 @@
 import {makeBodyFromQueries} from './grafana_queries';
 import {GrafanaResponseBody} from '../../types/grafana_types';
-import {GRAFANA_COOKIE, GRAFANA_DASHBOARD_UID, GRAFANA_DATASOURCE_UID, GRAFANA_DEVICE_ID, GRAFANA_NAMESPACE} from './environment';
+import {GRAFANA_COOKIE, GRAFANA_DATASOURCE_UID, GRAFANA_NAMESPACE} from './environment';
 
 import {Config} from '../../types/config_types';
 
@@ -18,9 +18,7 @@ const headers = {
     "sec-fetch-dest": "empty",
     "sec-fetch-mode": "cors",
     "sec-fetch-site": "same-origin",
-    "x-dashboard-uid": GRAFANA_DASHBOARD_UID,
     "x-datasource-uid": GRAFANA_DATASOURCE_UID,
-    "x-grafana-device-id": GRAFANA_DEVICE_ID,
     "x-grafana-org-id": "1",
     "x-panel-id": "2",
     "x-plugin-id": "prometheus"
