@@ -104,7 +104,7 @@ npm start
 
 ---
 
-Alternatively, you can run each step of the report separately for development:
+Alternatively, you can run each step of the report separately for development/debugging purposes:
 
 1. Gather data from Grafana, then you can examine the `data/json-out` folder for the fetched JSON data
 
