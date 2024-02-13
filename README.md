@@ -1,4 +1,4 @@
-# Grafana Scraper
+# Grafana/Prometheus to CSV/Spreadsheet
 
 This tool is used to perform Prometheus queries through Grafana's API, collecting data across multiple time frames. The output for each query is grouped into different CSV files, then exported into a Google Sheets spreadsheet for analysis.
 
