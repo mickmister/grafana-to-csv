@@ -1,14 +1,11 @@
 import fs from 'fs/promises';
 
-import configFile from './config.json';
+import configFile from '../../config.json';
 
 const config: Config = configFile;
 
-import originalFileData from './data/multi/two weeks/now-14d.json';
-import {GrafanaResponseBody, Labels} from './types/grafana_types';
-import {Config} from './types/config_types';
-
-const fileData: GrafanaResponseBody = originalFileData;
+import {GrafanaResponseBody, Labels} from '../../types/grafana_types';
+import {Config} from '../../types/config_types';
 
 type Entry = {
     fieldName: string;
@@ -36,7 +33,7 @@ const parseIntoEntries = (fdata: GrafanaResponseBody): ParsedEntries => {
             if (!frame.schema.fields[1]) {
                 console.log(frame.schema);
                 console.log('Error parsing data entry. Please see the logs above.');
-                process.exit(0);
+                continue;
             }
             const [fieldName, fieldValue] = getFieldFromLabels(frame.schema.fields[1].labels!);
             const value = frame.data.values[1][0];
@@ -78,25 +75,66 @@ const formatCsv = (parsedFiles: ParsedEntriesWithDateRange[]): CsvObject[] => {
         const fieldValues = Object.keys(allEntries[legendName]);
 
         const dateRanges = parsedFiles.map((f) => f.dateRange);
-        const firstLine = [legendName, ...dateRanges, 'Comparison'].join(',,');
-        const lines = [firstLine];
+        const firstLine = [
+            legendName,
+            ...dateRanges,
+            '',
+            'Relative Slope',
+            'First-Last Ratio',
+            'Standard Deviation to Mean Ratio',
+        ].join('|');
+
+        const secondLine = [
+            '',
+            ...dateRanges.map((_, i) => i + 1), // 1, 2, 3, 4, 5. For slope x values
+        ].join('|');
+
+        const lines = [firstLine, secondLine];
+        let realRowNum = 0;
         for (let rowNum = 0; rowNum < fieldValues.length; rowNum++) {
             const fieldValue = fieldValues[rowNum];
             const perField = allEntries[legendName][fieldValue];
             const line: string[] = [fieldValue];
+
+            let containsEmptyColumn = false;
             for (let columnNum = 0; columnNum < parsedFiles.length; columnNum++) {
                 const stored: number | undefined = perField[columnNum];
+                if (!stored) {
+                    containsEmptyColumn = true;
+                    break;
+                }
+
                 line.push((stored || '') + '');
             }
+            if (containsEmptyColumn) {
+                continue;
+            }
 
-            const A = 'A'.charCodeAt(0);
-            const startChar = String.fromCharCode(A + 2);
-            const endChar = String.fromCharCode(A + parsedFiles.length * 2);
-            const sheetsRowNum = rowNum + 2;
-            const comparisonCell = `=${endChar}${sheetsRowNum}/${startChar}${sheetsRowNum}`;
-            line.push(comparisonCell);
+            const charCodeForLetterA = 'A'.charCodeAt(0);
+            const startChar = String.fromCharCode(charCodeForLetterA + 1);
+            const sheetsRowNum = realRowNum + 3;
+            realRowNum++;
 
-            lines.push(line.join(',,'));
+            const endIndex = charCodeForLetterA + parsedFiles.length;
+            const endChar = String.fromCharCode(endIndex);
+            const start = `${startChar}${sheetsRowNum}`;
+            const end = `${endChar}${sheetsRowNum}`;
+
+            line.push('');
+
+            // Slope
+            const slope = `=SLOPE(${start}:${end}, $B$2:$${endChar}$2) / AVERAGE(${start}:${end})`;
+            line.push(slope);
+
+            // First-Last Ratio
+            const firstLastRatio = `=${end}/${start}`;
+            line.push(firstLastRatio);
+
+            // Standard Deviation to Mean Ratio
+            const stdev = `=STDEV(${start}:${end})/AVERAGE(${start}:${end})`;
+            line.push(stdev);
+
+            lines.push(line.join('|'));
         }
 
         const joinedLines = lines.join('\n');
@@ -111,7 +149,7 @@ type ParsedEntriesWithDateRange = {
     entries: ParsedEntries;
 }
 
-setTimeout(async () => {
+export const runJobCreateCsv = async () => {
     const allFileData: ParsedEntriesWithDateRange[] = [];
 
     const topFolder = `./data/${config.jsonFolderName}`;
@@ -148,4 +186,4 @@ setTimeout(async () => {
 
         await fs.writeFile(outputFileName, csvData.data);
     }
-});
+};

@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "fetch-data": "ts-node index.ts",
-    "create-csv": "ts-node csv_creator.ts",
+    "start": "ts-node src/index.ts",
+    "fetch-data": "ts-node src/grafana/index.ts",
+    "create-csv": "ts-node src/csv/index.ts",
+    "create-spreadsheet": "ts-node src/sheets/index.ts",
     "test": "jest csv_creator"
   },
   "keywords": [],
@@ -13,9 +15,12 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.3.1",
+    "google-spreadsheet": "^4.1.1",
+    "googleapis": "^132.0.0",
     "node-fetch": "^2.7.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.5.3",
     "@types/node": "^20.10.5",
     "@types/node-fetch": "^2.6.10",
     "ts-node": "^10.9.2",

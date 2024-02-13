@@ -3,12 +3,15 @@ export type Query = {
     name: string;
 }
 
-export type Config = {
+export type BaseConfig = {
     jsonFolderName: string;
     csvFolderName: string;
     totalNumberOfRequests: number;
     numberOfDaysPerRequest: number;
-    queries: Query[];
     runQueries: number[];
     offsetDays: number;
+}
+
+export type Config = BaseConfig & {
+    queries: Query[];
 }

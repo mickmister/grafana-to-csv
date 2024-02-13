@@ -1,5 +1,6 @@
-import {Query} from './types/config_types';
-import {GrafanaQueryPayload, GrafanaRequestBody} from './types/grafana_types';
+import {Query} from '../../types/config_types';
+import {GrafanaQueryPayload, GrafanaRequestBody} from '../../types/grafana_types';
+import {GRAFANA_DATASOURCE_UID} from './environment';
 
 const daysToMillis = (num: number) => {
     return num * (1000 * 60 * 60 * 24);
@@ -7,8 +8,7 @@ const daysToMillis = (num: number) => {
 
 const utcOffsetSec = -18000;
 const maxDataPoints = 1130;
-const datasourceUid = process.env.GRAFANA_DATASOURCE_UID!;
-const datasourceId = process.env.GRAFANA_DATASOURCE_ID ? parseInt(process.env.GRAFANA_DATASOURCE_ID) : 86;
+const datasourceUid = GRAFANA_DATASOURCE_UID!;
 
 export const makeBodyFromQueries = (queryNumber: number, daysPerQuery: number, offsetDays: number, queries: Query[], namespace: string): GrafanaRequestBody => {
     const time1 = new Date().getTime() - (daysToMillis((offsetDays + queryNumber * daysPerQuery)));
@@ -22,7 +22,7 @@ export const makeBodyFromQueries = (queryNumber: number, daysPerQuery: number, o
     const from = time2 + '';;
     const to = time1 + '';
 
-    const queryObjects = queries.map((query, i): GrafanaQueryPayload => {
+    const queryObjects = queries.map((query): GrafanaQueryPayload => {
         const refId = query.name;
         const expression = query.expression.replaceAll('$NAMESPACE', namespace);
 
@@ -43,7 +43,6 @@ export const makeBodyFromQueries = (queryNumber: number, daysPerQuery: number, o
             exemplar: false,
             requestId: `2${refId}`,
             utcOffsetSec,
-            datasourceId,
             intervalMs,
             maxDataPoints,
         };
