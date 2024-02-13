@@ -27,14 +27,14 @@ The `GRAFANA_NAMESPACE` environment variable is injected into the queries as sho
 
 ### Google Sheets Configuration
 
-Follow the instructions here to create a Google API service account and obtain an API key https://support.google.com/a/answer/7378726. Then supply the following values in the `.env` file:
+Follow the instructions [here](https://support.google.com/a/answer/7378726) to create a Google API service account and obtain an API key. Then supply the following values in the `.env` file:
 
 ```
 GOOGLE_API_KEY=(API key)
 GOOGLE_SPREADSHEET_NAME=(The name of the spreadsheet you want to create)
 ```
 
-Then supply only one of the following to have the spreadsheet shared with you:
+Then supply only one of the following to have the spreadsheet shared with you. `GOOGLE_USER_EMAIL` takes precedence if both are provided:
 
 ```
 GOOGLE_USER_EMAIL=(Your work/personal Google email address)
@@ -44,7 +44,7 @@ GOOGLE_DOMAIN=(Your Google workspace domain, e.g. mattermost.com)
 
 ### Prometheus Queries
 
-See [config.json](./config.json) for the example configuration. All queries to use are defined in this file. At the time of writing, there are 6 queries available by default:
+All Prometheus queries are defined in [config.json](./config.json). At the time of writing, there are 6 queries available by default:
 
 - Database store methods - Average Time
 - Database store methods - Total Time
