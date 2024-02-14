@@ -80,7 +80,8 @@ const formatCsv = (parsedFiles: ParsedEntriesWithDateRange[]): CsvObject[] => {
             ...dateRanges,
             '',
             'Relative Slope',
-            'First-Last Ratio',
+            'Last-First Ratio',
+            'Last-Average Ratio',
             'Standard Deviation to Mean Ratio',
         ].join('|');
 
@@ -126,9 +127,13 @@ const formatCsv = (parsedFiles: ParsedEntriesWithDateRange[]): CsvObject[] => {
             const slope = `=SLOPE(${start}:${end}, $B$2:$${endChar}$2) / AVERAGE(${start}:${end})`;
             line.push(slope);
 
-            // First-Last Ratio
-            const firstLastRatio = `=${end}/${start}`;
-            line.push(firstLastRatio);
+            // Last-First Ratio
+            const lastFirstRatio = `=${end}/${start}`;
+            line.push(lastFirstRatio);
+
+            // Last-Average Ratio
+            const lastAverageRatio = `=${end} / AVERAGE(${start}:${end})`;
+            line.push(lastAverageRatio);
 
             // Standard Deviation to Mean Ratio
             const stdev = `=STDEV(${start}:${end})/AVERAGE(${start}:${end})`;
