@@ -1,14 +1,10 @@
 import fs from 'fs/promises';
 
-import configFile from '../../config.json';
-
-const config: Config = configFile;
-
 import {Config} from '../../types/config_types';
 import {addDataToSheet, addMultipleSheets, createSpreadsheet, deleteSheet, freezeRows, getSpreadsheet, shareSpreadsheet} from './sheets_utils';
 import {GOOGLE_SPREADSHEET_NAME} from './environment';
 
-export const runJobCreateGoogleSheetFromCsv = async () => {
+export const runJobCreateGoogleSheetFromCsv = async (config: Config) => {
     const topFolder = `./data/${config.csvFolderName}`;
     const csvFolders = await fs.readdir(topFolder);
     csvFolders.sort();
@@ -16,7 +12,11 @@ export const runJobCreateGoogleSheetFromCsv = async () => {
     const fullFolderName = `${topFolder}/${timestampedFolder}`;
     const csvFiles = await fs.readdir(fullFolderName);
 
-    let gSpreadsheet = await createSpreadsheet(GOOGLE_SPREADSHEET_NAME!);
+    let spreadsheetName = GOOGLE_SPREADSHEET_NAME!;
+    spreadsheetName += `_${config.offsetDays}_${config.numberOfDaysPerRequest}_${config.totalNumberOfRequests}`;
+
+    let gSpreadsheet = await createSpreadsheet(spreadsheetName);
+
     console.log('Spreadsheet URL:', gSpreadsheet.data.spreadsheetUrl);
     fs.appendFile('./spreadsheet-urls.txt', '\n' + gSpreadsheet.data.spreadsheetUrl!);
 

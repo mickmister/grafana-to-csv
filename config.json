@@ -25,7 +25,7 @@
             "name": "API handlers - Total Time"
         }
     ],
-    "runQueries": [],
+    "runQueries": [0, 3],
     "jsonFolderName": "json-out",
     "csvFolderName": "csv-out",
     "totalNumberOfRequests": 16,

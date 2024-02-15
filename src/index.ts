@@ -1,50 +1,82 @@
 require('dotenv').config();
 
-import {Config} from '../types/config_types';
+import {BaseConfig, Config} from '../types/config_types';
 
 import configFile from '../config.json';
 import {runJobFetchData} from './grafana/job';
 import {runJobCreateCsv} from './csv/csv_creator';
 import {runJobCreateGoogleSheetFromCsv} from './sheets/create_sheets_from_csv';
 
-let config: Config = configFile;
+const initialConfig: Config = configFile;
 
 setTimeout(async () => {
-    await runJobFetchData(config);
-    await runJobCreateCsv();
-
-    const spreadsheet = await runJobCreateGoogleSheetFromCsv();
-    console.log('Spreadsheet URL:', spreadsheet.data.spreadsheetUrl);
-
     /*
-        let baseConfig: BaseConfig = {
-            runQueries: [],
-            jsonFolderName: 'json-out',
-            csvFolderName: 'csv-out',
-            totalNumberOfRequests: 12,
-            numberOfDaysPerRequest: 14,
-            offsetDays: 0
-        }
-
-        config = {
-            ...config,
-            ...baseConfig,
-        };
-
-        baseConfig = {
-            csvFolderName: config.csvFolderName + '-1',
-            jsonFolderName: config.csvFolderName + '-1',
-            numberOfDaysPerRequest: config.numberOfDaysPerRequest,
-            offsetDays: config.numberOfDaysPerRequest,
-            runQueries: [],
-            totalNumberOfRequests: config.totalNumberOfRequests,
-        };
-        config = {
-            ...config,
-            ...baseConfig,
-        }
-
-        await runJobFetchData(config);
-        await runJobCreateCsv();
+        - 2 week periods for:
+            - 14 requests = 7 months
+            - offset before holidays, 12 requests = 6 months
+            - offset before holidays, 6 requests = 3 months
+        - 1 week periods
+            - 6 requests = 6 weeks
+            - 24 requests = 6 months
+            - offset before holidays, 24 requests = 6 months
+            - offset before holidays, 12 requests = 3 months
     */
+
+    const runConfigs: BaseConfig[] = [
+        {
+            numberOfDaysPerRequest: 14,
+            totalNumberOfRequests: 16,
+            offsetDays: 0,
+            runQueries: [],
+        },
+        {
+            numberOfDaysPerRequest: 14,
+            totalNumberOfRequests: 12,
+            offsetDays: 56,
+            runQueries: [],
+        },
+        {
+            numberOfDaysPerRequest: 14,
+            totalNumberOfRequests: 6,
+            offsetDays: 56,
+            runQueries: [],
+        },
+        {
+            numberOfDaysPerRequest: 7,
+            totalNumberOfRequests: 6,
+            offsetDays: 0,
+            runQueries: [],
+        },
+        {
+            numberOfDaysPerRequest: 7,
+            totalNumberOfRequests: 24,
+            offsetDays: 0,
+            runQueries: [],
+        },
+        {
+            numberOfDaysPerRequest: 7,
+            totalNumberOfRequests: 24,
+            offsetDays: 56,
+            runQueries: [],
+        },
+        {
+            numberOfDaysPerRequest: 7,
+            totalNumberOfRequests: 12,
+            offsetDays: 56,
+            runQueries: [],
+        },
+    ];
+
+    for (const runConfig of runConfigs) {
+        const fullConfig = {
+            ...initialConfig,
+            ...runConfig,
+        };
+
+        await runJobFetchData(fullConfig);
+        await runJobCreateCsv();
+
+        const spreadsheet = await runJobCreateGoogleSheetFromCsv(fullConfig);
+        console.log('Spreadsheet URL:', spreadsheet.data.spreadsheetUrl);
+    }
 });
