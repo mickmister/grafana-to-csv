@@ -92,7 +92,7 @@ export const shareSpreadsheet = async (spreadsheetId: string) => {
         await drive.permissions.create({
             requestBody: {
                 ...args,
-                role: 'writer',
+                role: 'owner',
             },
             fileId: spreadsheetId,
             fields: 'id',
